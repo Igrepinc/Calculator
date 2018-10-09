@@ -3,6 +3,9 @@ import CalcButton from '../Components/Buttons/calcButton';
 import './Calculator.css';
 import '../Components/Buttons/calcButton.css';
 
+// Riješiti history
+// Broj inputa ograničiti da ne ispada iz okvira
+
 class Calculator extends Component {
 
     state = {
@@ -59,6 +62,15 @@ class Calculator extends Component {
         }
     }
 
+    checkZero = (inputValue) => { // Provjerava nule na kraju decimalnog broja
+      var result = inputValue;
+      while(result[result.length -1] === '0'){
+        result = result.slice(0, - 1); 
+      }
+
+      return result;
+    }
+
     calculate = (inputValues) => { // Kalkulacija. Ako input broj sadrži točku koristi parseFloat
       const allValues = inputValues.split(' ');
       let res = 0;
@@ -94,6 +106,10 @@ class Calculator extends Component {
          else{
            res = res.toString();
          }
+
+         if(res.includes('.')){
+           res = this.checkZero(res); // Ako je rezultat izračuna decimalni broj, mičem nule (ako postoje) s kraja jer nisu potrebne
+         } 
 
       this.setState({ result: res });
       return res;
@@ -147,13 +163,16 @@ class Calculator extends Component {
           case '%':
             if(this.state.shouldCalculate){
               res = this.calculate(res);
-              res /= 100;
-              res = res.toString().length > 12 ? res.toFixed(12).toString() : res.toString();
             }
-            else if(this.state.isNumberLast){ 
-              res /= 100;
-              res = res.toString().length > 12 ? res.toFixed(12).toString() : res.toString();
+            else if(!this.state.isNumberLast){
+              res = res.substr(0, res.length - 3);
             }
+            res /= 100;
+            res = res.toString().length > 12 ? res.toFixed(12).toString() : res.toString();
+            
+            if(res.includes('.')){
+              res = this.checkZero(res); // Ako je rezultat izračuna decimalni broj, mičem nule s kraja jer nisu potrebne
+            } 
             break;
           case '+/-':
             res = this.checkPrefix(res);
