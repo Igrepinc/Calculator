@@ -35,15 +35,15 @@ class Calculator extends Component {
     };
 
     checkInput = (inputValues) => { //provjeravam trenutni input i postavljam state prije slijedećeg inputa
-        let allValues = inputValues.split(' ').filter(val => val !== "");      
+        const allValues = inputValues.split(' ').filter(val => val !== "");      
         const last = allValues[allValues.length - 1];
 
-        let numLast = (last !== '/' && last !== '*' && last !== '+' && 
+        const numLast = (last !== '/' && last !== '*' && last !== '+' && 
         last !== '-' && last !== '%' && last !== ' ') ? true : false;
 
-        let shdCalc = allValues.length > 2 ? true : false;
+        const shdCalc = allValues.length > 2 ? true : false;
 
-        let hDot = last.includes('.') ? true : false;
+        const hDot = last.includes('.');
 
         this.setState(
           {
@@ -53,13 +53,24 @@ class Calculator extends Component {
           });        
     };
 
-    checkPrefix = (inputValue) => { // Provjeravam da li postoji - za gumb +/-
-        if(inputValue.charAt(0) !== '-'){
-          return '-' + inputValue
+    checkPrefix = (inputValue) => { // Provjeravam da li postoji - ispred broja za gumb +/-
+      if(this.state.isNumberLast){
+        const allValues = inputValue.split(' ').filter(val => val !== "");  
+        const last = allValues[allValues.length - 1]; 
+
+        if(allValues.length > 1 && last.charAt(0) !== '-'){
+          return allValues[0] + " " + allValues[1] + " -" + allValues[2];
         }
-        else {
-          return inputValue.substring(1);
+        else if(allValues.length > 1 && last.charAt(0) === '-'){
+          return allValues[0] + " " + allValues[1] + " " + allValues[2].substring(1);
         }
+        else if(allValues.length === 1 && last.charAt(0) !== '-'){
+          return "-" + allValues[0];
+        }
+        else{
+          return allValues[0].substring(1);
+        }
+      }
     }
 
     checkZero = (inputValue) => { // Provjerava nule na kraju decimalnog broja
@@ -71,45 +82,38 @@ class Calculator extends Component {
       return result;
     }
 
-    calculate = (inputValues) => { // Kalkulacija. Ako input broj sadrži točku koristi parseFloat
+    calculate = (inputValues) => { // Izvršavam kalkulaciju
       const allValues = inputValues.split(' ');
       let res = 0;
-         if(allValues[1] === '/'){
-           if(allValues[2] === '0'){
-            res = 'Cannot divide by zero';
-           }
-           else{
-            res = allValues[0].includes('.') || allValues[2].includes('.') ? 
-            parseFloat(allValues[0]) / parseFloat(allValues[2]) : 
-            parseInt(allValues[0]) / parseInt(allValues[2]);
-           }         
-         }
-         else if(allValues[1] === '*'){
-             res = allValues[0].includes('.') || allValues[2].includes('.') ? 
-             parseFloat(allValues[0]) * parseFloat(allValues[2]) : 
-             parseInt(allValues[0]) * parseInt(allValues[2]);
-         }
-         else if(allValues[1] === '+'){
-             res = allValues[0].includes('.') || allValues[2].includes('.') ? 
-             parseFloat(allValues[0]) + parseFloat(allValues[2]) : 
-             parseInt(allValues[0]) + parseInt(allValues[2]);
-         }
-         else if(allValues[1] === '-'){
-             res = allValues[0].includes('.') || allValues[2].includes('.') ? 
-             parseFloat(allValues[0]) - parseFloat(allValues[2]) : 
-             parseInt(allValues[0]) - parseInt(allValues[2]);
-         }
- 
-         if(res.toString().length > 12 && res !== 'Cannot divide by zero'){
-             res =res.toFixed(12).toString(); // ide na 12 decimala kako ukupan broj ne bi ispao iz okvira kalkulatora
-         }
-         else{
-           res = res.toString();
-         }
 
-         if(res.includes('.')){
-           res = this.checkZero(res); // Ako je rezultat izračuna decimalni broj, mičem nule (ako postoje) s kraja jer nisu potrebne
-         } 
+      if(allValues[1] === '/'){
+        if(allValues[2] === '0'){
+         res = 'Cannot divide by zero';
+        }
+        else{
+         res = parseFloat(allValues[0]) / parseFloat(allValues[2]);
+        }         
+      }
+      else if(allValues[1] === '*'){
+         res = parseFloat(allValues[0]) * parseFloat(allValues[2]);
+      }
+      else if(allValues[1] === '+'){
+         res = parseFloat(allValues[0]) + parseFloat(allValues[2]);
+      }
+      else if(allValues[1] === '-'){
+         res = parseFloat(allValues[0]) - parseFloat(allValues[2]);
+      }
+
+      if(res.toString().length > 12 && res !== 'Cannot divide by zero'){
+          res =res.toFixed(12).toString(); // ide na 12 decimala kako ukupan broj ne bi ispao iz okvira kalkulatora
+      }
+      else{
+        res = res.toString();
+      }
+
+      if(res.includes('.')){
+        res = this.checkZero(res); // Ako je rezultat izračuna decimalni broj, mičem nule (ako postoje) s kraja jer nisu potrebne
+      } 
 
       this.setState({ result: res });
       return res;
@@ -175,7 +179,9 @@ class Calculator extends Component {
             } 
             break;
           case '+/-':
-            res = this.checkPrefix(res);
+            if(this.state.isNumberLast){
+              res = this.checkPrefix(res);
+            }    
             break;
           case 'AC':
             res = '0';
