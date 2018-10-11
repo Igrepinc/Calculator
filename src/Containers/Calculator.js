@@ -1,15 +1,15 @@
 import React, { Component } from 'react';
-import CalcButton from '../Components/Buttons/calcButton';
+import Buttons from '../Components/Buttons/buttons';
 import './Calculator.css';
-import '../Components/Buttons/calcButton.css';
+import '../Components/Buttons/Button/calcButton.css';
 
-// Riješiti history
 // Broj inputa ograničiti da ne ispada iz okvira
 
 class Calculator extends Component {
 
     state = {
         result: '0',
+        history: '',
         isNumberLast : false,
         shouldCalculate: false,
         hasDot: false,
@@ -54,11 +54,25 @@ class Calculator extends Component {
     };
 
     checkPrefix = (inputValue) => { // Provjeravam da li postoji - ispred broja za gumb +/-
-      if(this.state.isNumberLast){
         const allValues = inputValue.split(' ').filter(val => val !== "");  
         const last = allValues[allValues.length - 1]; 
+        let histCheck = '';
 
-        if(allValues.length > 1 && last.charAt(0) !== '-'){
+        if(allValues.length > 3){ // Provjera za history, rezultat nikad ne sadrži više od 3 vrijednosti
+           for(let i = 0; i < allValues.length - 1; i++){
+             histCheck += allValues[i] + " ";
+           }
+
+           if(last.charAt(0) !== '-'){
+             histCheck +=  "-" + last;
+             return histCheck;
+           }
+           else{
+            histCheck += last.substring(1);
+            return histCheck
+           }
+        }      
+        else if(allValues.length > 1 && last.charAt(0) !== '-'){
           return allValues[0] + " " + allValues[1] + " -" + allValues[2];
         }
         else if(allValues.length > 1 && last.charAt(0) === '-'){
@@ -70,7 +84,6 @@ class Calculator extends Component {
         else{
           return allValues[0].substring(1);
         }
-      }
     }
 
     checkZero = (inputValue) => { // Provjerava nule na kraju decimalnog broja
@@ -121,10 +134,12 @@ class Calculator extends Component {
 
     onButtonClickHandler = (event) => {
       event.preventDefault();
-      var res = this.state.result;
+      let res = this.state.result;
+      let hist = this.state.history;
 
       if(res === 'Cannot divide by zero'){ //Ako je ovo trenutni state, izbriši sve prije dodavanja novog inputa
         res = '';  
+        hist = '';
       }
 
       switch(event.target.value){
@@ -140,10 +155,16 @@ class Calculator extends Component {
           case '9':
             if(res === '0'){ res = ''; } //mičem nulu sa početka
             res += event.target.value;
+            hist += event.target.value;
             break;
           case '.':
-            if(!this.state.hasDot){  //Ako vrijednost već sadrži točku ne dodavaj novu
+            if(!this.state.hasDot){ //Ako vrijednost već sadrži točku ne dodavaj novu
+              if(res.slice(-1) === " "){ // Ako ispred točke nije broj nego praznina, dodaj nulu isped točke
+                   res += "0";
+                   hist += "0";
+              }
               res += event.target.value;
+              hist += event.target.value;
             }
             break;
           case '/':
@@ -154,14 +175,18 @@ class Calculator extends Component {
               res = this.calculate(res)
               if(res !== 'Cannot divide by zero'){
                 res += " " + event.target.value + " ";
+                hist += " " + event.target.value + " ";
               }        
             }
             else if(this.state.isNumberLast){  
               res += " " + event.target.value + " ";
+              hist += " " + event.target.value + " ";
             }
             else{
               res = res.substr(0, res.length - 3); // mijenjanje operatora kad se klikaju jedan za drugim, ostali načini nisu radili kak spada pa nek ostane ovak
+              hist = hist.substr(0, hist.length - 3);
               res += " " + event.target.value + " ";
+              hist += " " + event.target.value + " ";
             }
             break;
           case '%':
@@ -177,23 +202,29 @@ class Calculator extends Component {
             if(res.includes('.')){
               res = this.checkZero(res); // Ako je rezultat izračuna decimalni broj, mičem nule s kraja jer nisu potrebne
             } 
+
+            hist += " / 100"; // Za history stavljam / 100 s obzirom da je % zapravo dijeljenje sa 100
             break;
           case '+/-':
             if(this.state.isNumberLast){
               res = this.checkPrefix(res);
+              hist = this.checkPrefix(hist);
             }    
             break;
           case 'AC':
             res = '0';
+            hist = '';
             break;
           case '=':
-            res = this.calculate(res);    
+            res = this.calculate(res);   
+            hist = res; 
             break;
           default:
-            res = '0';    
+            res = '0';  
+            hist = '';  
       }
 
-      this.setState({result: res});
+      this.setState({result: res, history: hist});
       this.checkInput(res);
     };
 
@@ -204,13 +235,10 @@ class Calculator extends Component {
 
        return(
            <div className="Calculator">
+            <input className="History" id="history" type = "text" readOnly value={this.state.history} />
             <input className="Input" id="summary" type = "text" readOnly value={this.state.result} />
             <div className="Buttons">
-                {options.map((num, index) => {
-                    return <CalcButton clsName = {this.getClassName(num)}
-                     key={index} buttonValue={num} 
-                     click = {this.onButtonClickHandler}>{num}</CalcButton>
-                })}
+                <Buttons buttons={options} className={this.getClassName} buttonClick ={this.onButtonClickHandler} />
             </div>
            </div>
        );
