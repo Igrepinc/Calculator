@@ -12,7 +12,7 @@
     height: 80px;
     display: block;
     text-align:right;
-    font-size: 45px;
+    font-size: 35px;
     border: 1px solid black;
 }
 
@@ -20,16 +20,3 @@
     width: 500px;
     background-color: black;
 }
-
-.History {
-    height: 40px;
-    width:500px;
-    width: 460px;
-    background-color: black;
-    color: white;
-    display: block;
-    text-align:right;
-    font-size: 15px;
-    border: 1px solid black;
-}
-
